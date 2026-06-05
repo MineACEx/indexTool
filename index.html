@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>全能工具箱</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+*{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
+body{margin:0;padding:0;min-height:100vh;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;-webkit-font-smoothing:antialiased}
+html,body,#root{height:100%}
+
+/* 滚动 */
+::-webkit-scrollbar{width:5px;background:transparent}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+
+/* 背景 */
+.page-bg{
+  min-height:100vh;
+  background:linear-gradient(160deg,#ffffff 0%,#f1f5f9 40%,#e8f0f7 100%);
+  background-attachment:fixed;
+  position:relative;
+  overflow:hidden;
+}
+.page-bg::before{content:'';position:fixed;inset:0;background:
+  radial-gradient(ellipse 70% 50% at 15% 20%,rgba(99,179,237,.07) 0%,transparent 60%),
+  radial-gradient(ellipse 60% 40% at 85% 80%,rgba(167,139,250,.06) 0%,transparent 60%);pointer-events:none;z-index:0}
+
+/* 毛玻璃 */
+.glass-nav{
+  background:rgba(255,255,255,.82);
+  backdrop-filter:blur(14px) saturate(1.2);
+  -webkit-backdrop-filter:blur(14px) saturate(1.2);
+  border-right:1.5px solid rgba(0,0,0,.07);
+  box-shadow:2px 0 16px rgba(0,0,0,.04);
+}
+.glass-header{
+  background:rgba(255,255,255,.82);
+  backdrop-filter:blur(14px) saturate(1.2);
+  -webkit-backdrop-filter:blur(14px) saturate(1.2);
+  border-bottom:1.5px solid rgba(0,0,0,.07);
+  box-shadow:0 2px 12px rgba(0,0,0,.04);
+}
+.glass-panel{
+  background:rgba(255,255,255,.72);
+  backdrop-filter:blur(10px) saturate(1.1);
+  -webkit-backdrop-filter:blur(10px) saturate(1.1);
+  border:1.5px solid rgba(0,0,0,.08);
+  box-shadow:0 2px 16px rgba(0,0,0,.06);
+}
+.glass-inset{
+  background:rgba(248,250,252,.8);
+  border:1.5px solid rgba(0,0,0,.07);
+}
+
+/* 动效 */
+@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInScale{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+@keyframes rippleAnim{0%{transform:scale(0);opacity:.4}100%{transform:scale(2.8);opacity:0}}
+@keyframes slideInLeft{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:translateX(0)}}
+@keyframes popIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+.anim-up{animation:fadeInUp .42s cubic-bezier(.22,1,.36,1) both}
+.anim-scale{animation:fadeInScale .35s cubic-bezier(.22,1,.36,1) both}
+.anim-slide{animation:slideInLeft .38s cubic-bezier(.22,1,.36,1) both}
+.anim-pop{animation:popIn .3s cubic-bezier(.22,1,.36,1) both}
+.spin{animation:spin .8s linear infinite}
+.float{animation:float 3s ease-in-out infinite}
+
+/* stagger */
+.s0{animation-delay:0ms}.s1{animation-delay:60ms}.s2{animation-delay:120ms}.s3{animation-delay:180ms}
+.s4{animation-delay:240ms}.s5{animation-delay:300ms}.s6{animation-delay:360ms}
+
+/* 涟漪 */
+.ripple-btn{position:relative;overflow:hidden}
+.ripple-dot{position:absolute;border-radius:50%;background:rgba(0,0,0,.08);
+  width:50px;height:50px;margin-left:-25px;margin-top:-25px;
+  animation:rippleAnim .6s cubic-bezier(.22,1,.36,1);pointer-events:none}
+
+/* 按钮 */
+.btn-p{background:#1e293b;color:#fff;border:none;cursor:pointer;font-weight:500;
+  transition:background .2s,transform .18s cubic-bezier(.22,1,.36,1),box-shadow .2s;
+  box-shadow:0 2px 10px rgba(30,41,59,.18)}
+.btn-p:hover{background:#334155;box-shadow:0 4px 18px rgba(30,41,59,.25);transform:translateY(-1px)}
+.btn-p:active{transform:scale(.96);box-shadow:0 1px 6px rgba(30,41,59,.15)}
+.btn-p:disabled{background:#94a3b8;cursor:not-allowed;transform:none}
+
+.btn-s{background:rgba(255,255,255,.9);border:1.5px solid rgba(0,0,0,.1);color:#374151;cursor:pointer;
+  transition:all .2s cubic-bezier(.22,1,.36,1)}
+.btn-s:hover{background:#fff;border-color:rgba(0,0,0,.18);transform:translateY(-1px);box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.btn-s:active{transform:scale(.96)}
+
+.btn-g{background:transparent;border:1.5px solid rgba(0,0,0,.08);color:#64748b;cursor:pointer;
+  transition:all .2s ease}
+.btn-g:hover{border-color:rgba(0,0,0,.16);color:#374151;background:rgba(0,0,0,.03)}
+.btn-g:active{transform:scale(.96)}
+
+/* 导航条激活 */
+.nav-active{background:rgba(30,41,59,.06);border-left:3px solid #1e293b}
+.nav-item{border-left:3px solid transparent;transition:all .25s cubic-bezier(.22,1,.36,1)}
+.nav-item:hover{background:rgba(0,0,0,.04)}
+.nav-item:active{transform:scale(.98)}
+
+/* 输入框 */
+.inp{background:rgba(255,255,255,.85);border:1.5px solid rgba(0,0,0,.1);color:#1e293b;
+  outline:none;transition:border-color .2s,box-shadow .2s;font-family:inherit}
+.inp:focus{border-color:#64748b;box-shadow:0 0 0 3px rgba(30,41,59,.06)}
+.inp:hover{border-color:rgba(0,0,0,.18)}
+textarea.inp{resize:vertical}
+
+/* range */
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;
+  background:rgba(0,0,0,.1);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;
+  border-radius:50%;background:#1e293b;border:3px solid #fff;cursor:pointer;
+  box-shadow:0 1px 6px rgba(0,0,0,.2);transition:transform .15s ease}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+
+select option{background:#fff;color:#1e293b}
+
+/* 徽章 */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.badge-blue{background:rgba(59,130,246,.1);color:#1d4ed8}
+.badge-green{background:rgba(34,197,94,.1);color:#15803d}
+
+/* 拖放 */
+.dropzone{border:2px dashed rgba(0,0,0,.12);transition:all .2s ease}
+.dropzone.drag-over{border-color:#1e293b;background:rgba(30,41,59,.03);transform:scale(1.01)}
+.dropzone:hover{border-color:rgba(0,0,0,.2)}
+
+/* Toast */
+.toast-wrap{position:fixed;top:18px;right:18px;z-index:9999}
+.toast-item{padding:10px 18px;border-radius:10px;font-size:13px;margin-bottom:8px;
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  box-shadow:0 4px 20px rgba(0,0,0,.1);border:1.5px solid rgba(0,0,0,.06);
+  animation:fadeInUp .3s ease both}
+.t-ok{background:rgba(255,255,255,.92);color:#15803d}
+.t-err{background:rgba(255,255,255,.92);color:#dc2626}
+
+/* 色块 */
+.swatch{transition:transform .2s cubic-bezier(.22,1,.36,1),box-shadow .2s;cursor:pointer;border-radius:12px;aspect-ratio:1;border:2px solid rgba(0,0,0,.08)}
+.swatch:hover{transform:scale(1.15) translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.18)}
+
+/* 工具卡 */
+.tool-grid-item{transition:all .25s cubic-bezier(.22,1,.36,1);cursor:pointer}
+.tool-grid-item:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.1)!important}
+.tool-grid-item:active{transform:scale(.97)}
+
+/* mobile panel */
+.mobile-overlay{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.2);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.mobile-drawer{position:fixed;top:0;left:0;bottom:0;width:260px;z-index:51;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-right:1.5px solid rgba(0,0,0,.07);
+  animation:slideInLeft .32s cubic-bezier(.22,1,.36,1) both}
+
+/* 布局：侧边栏固定，右侧滚动 */
+.layout-root{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;flex-shrink:0;display:flex;flex-direction:column;height:100vh;overflow-y:auto;z-index:10}
+.content-area{flex:1;min-width:0;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.content-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:28px 32px}
+@media(max-width:768px){
+  .sidebar{display:none}
+  .content-scroll{padding:20px 16px}
+}
+
+/* 图片预览区 */
+.img-preview{aspect-ratio:4/3;border-radius:10px;overflow:hidden;border:1.5px solid rgba(0,0,0,.07);background:rgba(0,0,0,.03)}
+.img-preview img{width:100%;height:100%;object-fit:contain}
+.img-preview .empty{display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#94a3b8;font-size:13px}
+
+/* 分隔线 */
+.divider{height:1px;background:rgba(0,0,0,.06);margin:4px 0}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useRef,useEffect,useCallback}=React;
+
+/* ── Toast ── */
+const Toast=({m,t,close})=>{useEffect(()=>{const id=setTimeout(close,2400);return()=>clearTimeout(id)},[]);return<div className={`toast-item ${t==='ok'?'t-ok':'t-err'}`}>{m}</div>};
+const Toasts=({list,rm})=><div className="toast-wrap">{list.map(t=><Toast key={t.id} m={t.m} t={t.t} close={()=>rm(t.id)}/>)}</div>;
+
+/* ── Icons ── */
+const Ic={
+  blur:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>,
+  fmt:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>,
+  resize:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 4v16M16 4v16M4 8h16M4 16h16"/></svg>,
+  color:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>,
+  audio:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>,
+  b64:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>,
+  url:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>,
+  ts:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+  txt:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>,
+  hash:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>,
+  up:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>,
+  dn:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+  cp:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>,
+  ck:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+  arr:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>,
+  sw:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="7 16 3 12 7 8"/><line x1="3" y1="12" x2="21" y2="12"/><polyline points="17 8 21 12 17 16"/></svg>,
+  menu:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
+  close:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+  ref:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>,
+};
+
+const TOOLS=[
+  {id:'blur',label:'图片模糊',icon:Ic.blur,desc:'高斯模糊处理'},
+  {id:'fmt',label:'格式转换',icon:Ic.fmt,desc:'PNG/JPG/WebP互转'},
+  {id:'resize',label:'尺寸调整',icon:Ic.resize,desc:'压缩与缩放'},
+  {id:'color',label:'颜色提取',icon:Ic.color,desc:'提取主色调'},
+  {id:'audio',label:'音频转换',icon:Ic.audio,desc:'转为WAV无损'},
+  {id:'b64',label:'Base64',icon:Ic.b64,desc:'编码与解码'},
+  {id:'url',label:'URL编解码',icon:Ic.url,desc:'URL字符处理'},
+  {id:'ts',label:'时间戳',icon:Ic.ts,desc:'时间转换'},
+  {id:'txt',label:'文本格式化',icon:Ic.txt,desc:'排版整理统计'},
+  {id:'hash',label:'哈希计算',icon:Ic.hash,desc:'SHA256/MD5近似'},
+];
+const FMTS=['png','jpg','jpeg','webp','bmp'];
+
+/* ── Ripple util ── */
+const ripple=(e,ref)=>{const b=ref?.current||e.currentTarget;if(!b)return;const r=b.getBoundingClientRect(),d=document.createElement('span');d.className='ripple-dot';d.style.left=(e.clientX-r.left)+'px';d.style.top=(e.clientY-r.top)+'px';b.appendChild(d);setTimeout(()=>d.remove(),650)};
+
+/* ── Upload Zone ── */
+const UploadZone=({onFile,accept,label,hint})=>{
+  const [drag,setDrag]=useState(false);
+  const ref=useRef(null);
+  const over=e=>{e.preventDefault();setDrag(true)};
+  const leave=()=>setDrag(false);
+  const drop=e=>{e.preventDefault();setDrag(false);const f=e.dataTransfer.files?.[0];if(f)onFile(f)};
+  return(
+    <label className={`dropzone glass-panel rounded-xl flex flex-col items-center justify-center h-44 cursor-pointer ${drag?'drag-over':''}`}
+      onDragOver={over} onDragLeave={leave} onDrop={drop}>
+      <div className="w-11 h-11 rounded-full flex items-center justify-center mb-3 text-slate-500 float" style={{background:'rgba(0,0,0,.05)'}}>{Ic.up}</div>
+      <p className="text-sm font-semibold text-slate-800">{label}</p>
+      <p className="text-xs text-slate-500 mt-1">{hint}</p>
+      <p className="text-xs text-slate-400 mt-0.5">或拖放文件至此</p>
+      <input ref={ref} type="file" accept={accept} className="hidden" onChange={e=>{const f=e.target.files?.[0];if(f)onFile(f)}}/>
+    </label>
+  );
+};
+
+/* ── Copy btn ── */
+const CopyBtn=({text,toast})=>{const [ok,setOk]=useState(false);const handle=async e=>{ripple(e);try{await navigator.clipboard.writeText(text);setOk(true);toast('已复制');setTimeout(()=>setOk(false),1800)}catch{toast('复制失败','err')}};return(<button onClick={handle} className="ripple-btn btn-s h-7 px-2.5 rounded-md text-xs flex items-center gap-1">{ok?Ic.ck:Ic.cp}{ok?'已复制':'复制'}</button>)};
+
+/* ── Section title ── */
+const ST=({t,sub})=><div className="mb-5"><h2 className="text-xl font-bold text-slate-900 tracking-tight">{t}</h2>{sub&&<p className="text-sm text-slate-500 mt-1">{sub}</p>}</div>;
+
+/* ────────── Tools ────────── */
+
+/* 1. Blur */
+const Blur=({toast})=>{
+  const [orig,setOrig]=useState(null),[out,setOut]=useState(null),[amt,setAmt]=useState(10),[name,setName]=useState('image');
+  const cvs=useRef(),btn=useRef();
+  const load=f=>{if(!f.type.startsWith('image/')){toast('请上传图片文件','err');return}setName(f.name.replace(/\.[^.]+$/,''));const r=new FileReader();r.onload=e=>{setOrig(e.target.result);setOut(null)};r.readAsDataURL(f)};
+  const apply=e=>{ripple(e,btn);if(!orig)return;const i=new Image();i.onload=()=>{const c=cvs.current;c.width=i.width;c.height=i.height;const x=c.getContext('2d');x.filter=`blur(${amt}px)`;x.drawImage(i,0,0);setOut(c.toDataURL('image/png'))};i.src=orig};
+  const dl=()=>{if(!out)return;const a=document.createElement('a');a.download=`${name}_blurred.png`;a.href=out;a.click()};
+  return(<div className="anim-up"><ST t="图片模糊处理" sub="上传图片，通过高斯模糊算法生成模糊效果，支持拖放上传"/>
+    <canvas ref={cvs} className="hidden"/>
+    {!orig?<UploadZone onFile={load} accept="image/*" label="点击上传图片" hint="PNG · JPG · WebP 等格式"/>:(
+    <div className="space-y-5">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between"><label className="text-sm font-semibold text-slate-700">模糊程度</label><span className="text-sm text-slate-500 tabular-nums font-mono">{amt}px</span></div>
+        <input type="range" min="1" max="50" step="1" value={amt} onChange={e=>setAmt(+e.target.value)}/>
+        <div className="flex justify-between text-xs text-slate-400"><span>轻微 1px</span><span>极强 50px</span></div>
+      </div>
+      <div className="flex gap-2.5">
+        <button ref={btn} onClick={apply} className="ripple-btn btn-p flex-1 h-10 rounded-xl flex items-center justify-center gap-2 text-sm">{Ic.ref} 应用模糊</button>
+        <button onClick={e=>{ripple(e);setOrig(null);setOut(null)}} className="ripple-btn btn-s h-10 px-5 rounded-xl text-sm">重新上传</button>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2"><p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">原图</p><div className="img-preview"><img src={orig} alt=""/></div></div>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between"><p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">模糊效果</p>{out&&<button onClick={dl} className="ripple-btn btn-s h-7 px-2.5 rounded-md text-xs flex items-center gap-1">{Ic.dn} 下载</button>}</div>
+          <div className="img-preview">{out?<img src={out} alt=""/>:<div className="empty">点击「应用模糊」查看效果</div>}</div>
+        </div>
+      </div>
+    </div>)}
+  </div>);
+};
+
+/* 2. 格式转换 */
+const Fmt=({toast})=>{
+  const [orig,setOrig]=useState(null),[out,setOut]=useState(null),[sf,setSf]=useState(''),[tf,setTf]=useState('png'),[name,setName]=useState('image');
+  const cvs=useRef(),btn=useRef();
+  const load=f=>{if(!f.type.startsWith('image/')){toast('请上传图片文件','err');return}setSf(f.name.split('.').pop()?.toLowerCase()||'png');setName(f.name.replace(/\.[^.]+$/,''));const r=new FileReader();r.onload=e=>{setOrig(e.target.result);setOut(null)};r.readAsDataURL(f)};
+  const convert=e=>{ripple(e,btn);if(!orig)return;const i=new Image();i.onload=()=>{const c=cvs.current;c.width=i.width;c.height=i.height;c.getContext('2d').drawImage(i,0,0);const mt=tf==='jpg'||tf==='jpeg'?'image/jpeg':tf==='webp'?'image/webp':tf==='bmp'?'image/bmp':'image/png';setOut(c.toDataURL(mt,mt==='image/jpeg'?0.92:undefined))};i.src=orig};
+  const dl=()=>{if(!out)return;const a=document.createElement('a');a.download=`${name}.${tf}`;a.href=out;a.click()};
+  return(<div className="anim-up"><ST t="图片格式转换" sub="在 PNG · JPG · WebP · BMP 等格式之间自由转换"/>
+    <canvas ref={cvs} className="hidden"/>
+    {!orig?<UploadZone onFile={load} accept="image/*" label="点击上传图片" hint="支持 PNG · JPG · WebP · BMP"/>:(
+    <div className="space-y-5">
+      <div className="flex items-center gap-4">
+        <div className="flex-1"><p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">源格式</p><div className="h-10 px-3 flex items-center rounded-xl glass-inset text-sm font-mono text-slate-600">{sf.toUpperCase()}</div></div>
+        <div className="pt-5 text-slate-400">{Ic.arr}</div>
+        <div className="flex-1"><p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">目标格式</p>
+          <select value={tf} onChange={e=>setTf(e.target.value)} className="inp h-10 w-full px-3 rounded-xl text-sm">{FMTS.map(f=><option key={f} value={f}>{f.toUpperCase()}</option>)}</select>
+        </div>
+      </div>
+      <div className="flex gap-2.5">
+        <button ref={btn} onClick={convert} className="ripple-btn btn-p flex-1 h-10 rounded-xl flex items-center justify-center gap-2 text-sm">{Ic.fmt} 开始转换</button>
+        <button onClick={e=>{ripple(e);setOrig(null);setOut(null)}} className="ripple-btn btn-s h-10 px-5 rounded-xl text-sm">重新上传</button>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2"><p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">原图 ({sf.toUpperCase()})</p><div className="img-preview"><img src={orig} alt=""/></div></div>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between"><p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">转换后 ({tf.toUpperCase()})</p>{out&&<button onClick={dl} className="ripple-btn btn-s h-7 px-2.5 rounded-md text-xs flex items-center gap-1">{Ic.dn} 下载</button>}</div>
+          <div className="img-preview">{out?<img src={out} alt=""/>:<div className="empty">点击「开始转换」查看效果</div>}</div>
+        </div>
+      </div>
+    </div>)}
+  </div>);
+};
+
+/* 3. 尺寸调整 */
+const Resize=({toast})=>{
+  const [orig,setOrig]=useState(null),[out,setOut]=useState(null),[w,setW]=useState(0),[h,setH]=useState(0),[ow,setOw]=useState(0),[oh,setOh]=useState(0),[q,setQ]=useState(85),[lock,setLock]=useState(true),[name,setName]=useState('image');
+  const cvs=useRef(),btn=useRef();
+  const load=f=>{if(!f.type.startsWith('image/')){toast('请上传图片文件','err');return}setName(f.name.replace(/\.[^.]+$/,''));const r=new FileReader();r.onload=e=>{const i=new Image();i.onload=()=>{setW(i.width);setH(i.height);setOw(i.width);setOh(i.height);setOrig(e.target.result);setOut(null)};i.src=e.target.result};r.readAsDataURL(f)};
+  const changeW=v=>{setW(v);if(lock&&oh>0)setH(Math.round(v*(oh/ow)))};
+  const changeH=v=>{setH(v);if(lock&&ow>0)setW(Math.round(v*(ow/oh)))};
+  const resize=e=>{ripple(e,btn);if(!orig||!w||!h)return;const i=new Image();i.onload=()=>{const c=cvs.current;c.width=w;c.height=h;c.getContext('2d').drawImage(i,0,0,w,h);setOut(c.toDataURL('image/jpeg',q/100))};i.src=orig};
+  const dl=()=>{if(!out)return;const a=document.createElement('a');a.download=`${name}_${w}x${h}.jpg`;a.href=out;a.click()};
+  return(<div className="anim-up"><ST t="图片尺寸调整" sub="调整图片分辨率并压缩输出，支持等比例锁定"/>
+    <canvas ref={cvs} className="hidden"/>
+    {!orig?<UploadZone onFile={load} accept="image/*" label="点击上传图片" hint="支持 PNG · JPG · WebP"/>:(
+    <div className="space-y-5">
+      <div className="glass-panel rounded-xl p-4 space-y-3">
+        <p className="text-xs text-slate-500">原始尺寸：{ow} × {oh} px</p>
+        <div className="flex items-end gap-3">
+          <div className="flex-1 space-y-1.5"><label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">宽度 (px)</label><input type="number" value={w} onChange={e=>changeW(+e.target.value)} className="inp h-10 w-full px-3 rounded-xl text-sm font-mono"/></div>
+          <button onClick={e=>{ripple(e);setLock(l=>!l)}} className={`ripple-btn h-10 w-10 rounded-xl flex items-center justify-center text-sm flex-shrink-0 ${lock?'btn-p':'btn-s'}`} title={lock?'已锁定比例':'未锁定'}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{lock?<><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>:<><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></>}</svg></button>
+          <div className="flex-1 space-y-1.5"><label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">高度 (px)</label><input type="number" value={h} onChange={e=>changeH(+e.target.value)} className="inp h-10 w-full px-3 rounded-xl text-sm font-mono"/></div>
+        </div>
+        <div className="space-y-2"><div className="flex justify-between items-center"><label className="text-sm font-semibold text-slate-700">压缩质量</label><span className="text-sm text-slate-500 font-mono">{q}%</span></div><input type="range" min="10" max="100" step="5" value={q} onChange={e=>setQ(+e.target.value)}/></div>
+      </div>
+      <div className="flex gap-2.5">
+        <button ref={btn} onClick={resize} className="ripple-btn btn-p flex-1 h-10 rounded-xl flex items-center justify-center gap-2 text-sm">{Ic.resize} 调整尺寸</button>
+        <button onClick={e=>{ripple(e);setOrig(null);setOut(null)}} className="ripple-btn btn-s h-10 px-5 rounded-xl text-sm">重新上传</button>
+      </div>
+      {out&&<div className="glass-panel rounded-xl p-4 flex items-center justify-between"><div><p className="text-sm font-semibold text-slate-800">输出尺寸：{w} × {h} px</p><p className="text-xs text-slate-500 mt-0.5">JPEG 质量 {q}%</p></div><button onClick={dl} className="ripple-btn btn-p h-9 px-4 rounded-xl text-sm flex items-center gap-1.5">{Ic.dn} 下载</button></div>}
+    </div>)}
+  </div>);
+};
+
+/* 4. 颜色提取 */
+const ColorEx=({toast})=>{
+  const [orig,setOrig]=useState(null),[colors,setColors]=useState([]);
+  const extract=url=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>{const c=document.createElement('canvas'),x=c.getContext('2d');c.width=i.width;c.height=i.height;x.drawImage(i,0,0);const d=x.getImageData(0,0,c.width,c.height).data,m=new Map();for(let j=0;j<d.length;j+=4){if(d[j+3]<100)continue;const r=Math.round(d[j]/28)*28,g=Math.round(d[j+1]/28)*28,b=Math.round(d[j+2]/28)*28,k=`${r},${g},${b}`;m.set(k,(m.get(k)||0)+1)}const s=[...m.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k])=>`rgb(${k})`);setColors(s)};i.src=url};
+  const load=f=>{if(!f.type.startsWith('image/')){toast('请上传图片文件','err');return}const r=new FileReader();r.onload=e=>{setOrig(e.target.result);extract(e.target.result)};r.readAsDataURL(f)};
+  const toHex=rgb=>{const m=rgb.match(/\d+/g);if(!m)return rgb;return'#'+m.map(v=>parseInt(v).toString(16).padStart(2,'0')).join('')};
+  const cp=(t)=>{navigator.clipboard.writeText(t).then(()=>toast(`已复制 ${t}`)).catch(()=>toast('复制失败','err'))};
+  return(<div className="anim-up"><ST t="颜色提取" sub="上传图片，自动提取前10种主要颜色，点击即可复制色值"/>
+    {!orig?<UploadZone onFile={load} accept="image/*" label="点击上传图片" hint="自动提取主要颜色"/>:(
+    <div className="space-y-5">
+      <button onClick={e=>{ripple(e);setOrig(null);setColors([])}} className="ripple-btn btn-s h-9 px-4 rounded-xl text-sm">重新上传</button>
+      <div className="img-preview max-h-56"><img src={orig} alt="" style={{maxHeight:'224px',objectFit:'contain'}}/></div>
+      {colors.length>0&&<div className="space-y-3">
+        <p className="text-sm font-semibold text-slate-700">提取到 {colors.length} 种颜色（点击复制）</p>
+        <div className="grid grid-cols-5 sm:grid-cols-10 gap-3">
+          {colors.map((c,i)=><div key={i} className="flex flex-col items-center gap-1.5 anim-pop" style={{animationDelay:`${i*55}ms`}}>
+            <div className="swatch w-full" style={{background:c}} onClick={()=>cp(toHex(c))} title="点击复制"/>
+            <span className="text-[9px] font-mono text-slate-500 truncate w-full text-center">{toHex(c)}</span>
+          </div>)}
+        </div>
+      </div>}
+    </div>)}
+  </div>);
+};
+
+/* 5. 音频转换 */
+const AudioTool=({toast})=>{
+  const [file,setFile]=useState(null),[url,setUrl]=useState(null),[cvt,setCvt]=useState(false);
+  const encWav=ab=>{const nc=ab.numberOfChannels,fl=ab.length*nc*2+44,buf=new ArrayBuffer(fl),v=new DataView(buf);const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};ws(0,'RIFF');v.setUint32(4,fl-8,true);ws(8,'WAVE');ws(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,nc,true);v.setUint32(24,ab.sampleRate,true);v.setUint32(28,ab.sampleRate*2*nc,true);v.setUint16(32,nc*2,true);v.setUint16(34,16,true);ws(36,'data');v.setUint32(40,fl-44,true);const ch=[];for(let i=0;i<nc;i++)ch.push(ab.getChannelData(i));let ofs=44;for(let i=0;i<ab.length;i++)for(let c=0;c<nc;c++){let s=Math.max(-1,Math.min(1,ch[c][i]));s=s<0?s*0x8000:s*0x7FFF;v.setInt16(ofs,s,true);ofs+=2}return buf};
+  const load=f=>{if(!f.type.startsWith('audio/')){toast('请上传音频文件','err');return}setFile(f);setUrl(URL.createObjectURL(f))};
+  const toWav=async e=>{ripple(e);if(!file||cvt)return;setCvt(true);try{const ctx=new(window.AudioContext||window.webkitAudioContext)(),ab=await file.arrayBuffer(),dec=await ctx.decodeAudioData(ab),wav=encWav(dec),blob=new Blob([wav],{type:'audio/wav'}),a=document.createElement('a');a.download=file.name.replace(/\.[^.]+$/,'')+'.wav';a.href=URL.createObjectURL(blob);a.click();toast('转换完成，已开始下载')}catch(err){toast('转换失败: '+err.message,'err')}finally{setCvt(false)}};
+  const reset=()=>{setFile(null);setUrl(null)};
+  return(<div className="anim-up"><ST t="音频格式转换" sub="将 MP3 · OGG · AAC · FLAC 等格式转换为 WAV 无损音频，在浏览器本地完成"/>
+    {!file?<UploadZone onFile={load} accept="audio/*" label="点击上传音频文件" hint="支持 MP3 · OGG · AAC · FLAC 等格式"/>:(
+    <div className="space-y-5">
+      <div className="glass-panel rounded-xl p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="min-w-0"><p className="text-sm font-semibold text-slate-800 truncate">{file.name}</p><p className="text-xs text-slate-500 mt-0.5">{(file.size/1024/1024).toFixed(2)} MB</p></div>
+          <button onClick={e=>{ripple(e);reset()}} className="ripple-btn btn-s h-8 px-3 rounded-lg text-xs flex-shrink-0">更换</button>
+        </div>
+        <audio src={url} controls className="w-full" style={{outline:'none',borderRadius:'8px'}}/>
+        <button onClick={toWav} disabled={cvt} className="ripple-btn btn-p w-full h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold">
+          {cvt?<><svg className="spin" width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="60" strokeDashoffset="20"/></svg> 转换中...</>:<>{Ic.audio} 转为 WAV 无损格式</>}
+        </button>
+      </div>
+      <div className="glass-panel rounded-xl p-4">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2.5">说明</p>
+        <ul className="text-xs text-slate-500 space-y-1.5">
+          <li className="flex gap-2"><span className="text-slate-300">·</span>通过 Web Audio API 解码音频并重新编码为 WAV PCM 格式</li>
+          <li className="flex gap-2"><span className="text-slate-300">·</span>输出为 16bit 整型 PCM，采样率与原文件一致</li>
+          <li className="flex gap-2"><span className="text-slate-300">·</span>所有处理均在浏览器本地完成，文件不会上传至任何服务器</li>
+        </ul>
+      </div>
+    </div>)}
+  </div>);
+};
+
+/* 6. Base64 */
+const B64=({toast})=>{
+  const [mode,setMode]=useState('enc'),[inp,setInp]=useState(''),[out,setOut]=useState('');
+  const btn=useRef();
+  const run=e=>{ripple(e,btn);if(!inp.trim()){toast('请输入内容','err');return}if(mode==='enc'){try{setOut(btoa(unescape(encodeURIComponent(inp))))}catch{toast('编码失败','err')}}else{try{setOut(decodeURIComponent(escape(atob(inp.trim()))))}catch{toast('解码失败，请检查格式','err')}}};
+  const dl=()=>{if(!out)return;const b=new Blob([out],{type:'text/plain'}),a=document.createElement('a');a.download=`base64_${mode}.txt`;a.href=URL.createObjectURL(b);a.click()};
+  const clear=e=>{ripple(e);setInp('');setOut('')};
+  return(<div className="anim-up"><ST t="Base64 编码解码" sub="支持任意文本的 Base64 编码与解码，含中文"/>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        {['enc','dec'].map(m=><button key={m} onClick={e=>{ripple(e);setMode(m);setInp('');setOut('')}} className={`ripple-btn h-9 px-5 rounded-xl text-sm font-semibold transition-all ${mode===m?'btn-p':'btn-s'}`}>{m==='enc'?'编码':'解码'}</button>)}
+        <button onClick={e=>{ripple(e);setMode(m=>m==='enc'?'dec':'enc');setInp('');setOut('')}} className="ripple-btn btn-g h-9 w-9 rounded-xl flex items-center justify-center ml-1">{Ic.sw}</button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between"><label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{mode==='enc'?'原始文本':'Base64 字符串'}</label><span className="text-xs font-mono text-slate-400">{inp.length} 字符</span></div>
+          <textarea value={inp} onChange={e=>setInp(e.target.value)} placeholder={mode==='enc'?'输入需要编码的文本...':'输入 Base64 字符串...'} className="inp w-full min-h-[180px] p-3 rounded-xl text-sm font-mono" style={{minHeight:'180px'}}/>
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between"><label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{mode==='enc'?'编码结果':'解码结果'}</label>{out&&<div className="flex gap-1.5"><CopyBtn text={out} toast={toast}/><button onClick={dl} className="ripple-btn btn-s h-7 px-2.5 rounded-md text-xs flex items-center gap-1">{Ic.dn}</button></div>}</div>
+          <textarea value={out} readOnly placeholder="结果将显示在这里..." className="inp w-full min-h-[180px] p-3 rounded-xl text-sm font-mono" style={{minHeight:'180px',background:'rgba(248,250,252,.9)'}}/>
+        </div>
+      </div>
+      <div className="flex gap-2.5">
+        <button ref={btn} onClick={run} className="ripple-btn btn-p h-10 px-8 rounded-xl text-sm font-semibold">{mode==='enc'?'编码':'解码'}</button>
+        <button onClick={clear} className="ripple-btn btn-g h-10 px-5 rounded-xl text-sm">清空</button>
+      </div>
+    </div>
+  </div>);
+};
+
+/* 7. URL */
+const UrlTool=({toast})=>{
+  const [mode,setMode]=useState('enc'),[inp,setInp]=useState(''),[out,setOut]=useState('');
+  const btn=useRef();
+  const run=e=>{ripple(e,btn);if(!inp.trim()){toast('请输入内容','err');return}if(mode==='enc'){try{setOut(encodeURIComponent(inp))}catch{toast('编码失败','err')}}else{try{setOut(decodeURIComponent(inp))}catch{toast('解码失败','err')}}};
+  return(<div className="anim-up"><ST t="URL 编解码" sub="URL 字符编码与解码，支持中文及特殊字符"/>
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        {['enc','dec'].map(m=><button key={m} onClick={e=>{ripple(e);setMode(m);setInp('');setOut('')}} className={`ripple-btn h-9 px-5 rounded-xl text-sm font-semibold ${mode===m?'btn-p':'btn-s'}`}>{m==='enc'?'编码':'解码'}</button>)}
+      </div>
+      <div className="space-y-2"><label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{mode==='enc'?'原始文本':'编码字符串'}</label>
+        <textarea value={inp} onChange={e=>setInp(e.target.value)} placeholder={mode==='enc'?'输入 URL 或包含中文的文本...':'输入 %xx 编码字符串...'} className="inp w-full p-3 rounded-xl text-sm font-mono" style={{minHeight:'120px'}}/>
+      </div>
+      <div className="space-y-2"><div className="flex items-center justify-between"><label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">结果</label>{out&&<CopyBtn text={out} toast={toast}/>}</div>
+        <textarea value={out} readOnly placeholder="结果将显示在这里..." className="inp w-full p-3 rounded-xl text-sm font-mono" style={{minHeight:'120px',background:'rgba(248,250,252,.9)'}}/>
+      </div>
+      <div className="flex gap-2.5">
+        <button ref={btn} onClick={run} className="ripple-btn btn-p h-10 px-8 rounded-xl text-sm font-semibold">{mode==='enc'?'编码':'解码'}</button>
+        <button onClick={e=>{ripple(e);setInp('');setOut('')}} className="ripple-btn btn-g h-10 px-5 rounded-xl text-sm">清空</button>
+      </div>
+    </div>
+  </div>);
+};
+
+/* 8. 时间戳 */
+const TsTool=({toast})=>{
+  const [ts,setTs]=useState(()=>Math.floor(Date.now()/1000));
+  const [dt,setDt]=useState(()=>new Date().toISOString().slice(0,19).replace('T',' '));
+  const [res,setRes]=useState('');
+  const b1=useRef(),b2=useRef();
+  const toDate=e=>{ripple(e,b1);try{const d=new Date(ts*1000);setRes(d.toLocaleString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).replace(/\//g,'-'))}catch{toast('无效时间戳','err')}};
+  const toTs=e=>{ripple(e,b2);const d=new Date(dt.includes(' ')?dt.replace(' ','T'):dt);if(isNaN(d.getTime())){toast('日期格式无效','err');return}setRes(Math.floor(d.getTime()/1000).toString())};
+  const now=e=>{ripple(e);const n=Date.now();setTs(Math.floor(n/1000));setDt(new Date(n).toISOString().slice(0,19).replace('T',' '))};
+  return(<div className="anim-up"><ST t="时间戳转换" sub="Unix 时间戳与本地日期时间互相转换"/>
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="glass-panel rounded-xl p-5 space-y-4">
+          <p className="text-sm font-semibold text-slate-700">时间戳 → 日期</p>
+          <div className="space-y-1.5"><label className="text-xs text-slate-500">Unix 时间戳（秒）</label><input type="number" value={ts} onChange={e=>setTs(+e.target.value)} className="inp h-10 w-full px-3 rounded-xl text-sm font-mono"/></div>
+          <button ref={b1} onClick={toDate} className="ripple-btn btn-p w-full h-10 rounded-xl text-sm font-semibold">转换为日期</button>
+        </div>
+        <div className="glass-panel rounded-xl p-5 space-y-4">
+          <p className="text-sm font-semibold text-slate-700">日期 → 时间戳</p>
+          <div className="space-y-1.5"><label className="text-xs text-slate-500">格式：YYYY-MM-DD HH:MM:SS</label><input type="text" value={dt} onChange={e=>setDt(e.target.value)} placeholder="2024-06-04 12:00:00" className="inp h-10 w-full px-3 rounded-xl text-sm font-mono"/></div>
+          <button ref={b2} onClick={toTs} className="ripple-btn btn-p w-full h-10 rounded-xl text-sm font-semibold">转换为时间戳</button>
+        </div>
+      </div>
+      <button onClick={now} className="ripple-btn btn-s h-9 px-4 rounded-xl text-sm flex items-center gap-2">{Ic.ref} 获取当前时间</button>
+      {res&&<div className="glass-panel rounded-xl p-4 flex items-center justify-between anim-scale"><span className="text-xl font-mono font-bold text-slate-800">{res}</span><CopyBtn text={res} toast={toast}/></div>}
+    </div>
+  </div>);
+};
+
+/* 9. 文本格式化 */
+const TxtTool=({toast})=>{
+  const [inp,setInp]=useState(''),[out,setOut]=useState('');
+  const ops=[
+    ['去除首尾空白',()=>setOut(inp.trim())],
+    ['去除多余空行',()=>setOut(inp.replace(/\n{3,}/g,'\n\n').trim())],
+    ['去除多余空格',()=>setOut(inp.replace(/\s+/g,' ').trim())],
+    ['转大写',()=>setOut(inp.toUpperCase())],
+    ['转小写',()=>setOut(inp.toLowerCase())],
+    ['首字母大写',()=>setOut(inp.replace(/\b\w/g,c=>c.toUpperCase()))],
+    ['反转文本',()=>setOut([...inp].reverse().join(''))],
+    ['统计字数',()=>{const c=inp.length,w=inp.trim().split(/\s+/).filter(Boolean).length,l=inp.split('\n').length;setOut(`字符数：${c}\n单词/词组数：${w}\n行数：${l}\n中文字符：${(inp.match(/[\u4e00-\u9fff]/g)||[]).length}`)}],
+  ];
+  return(<div className="anim-up"><ST t="文本格式化" sub="文本排版整理、统计与快速转换"/>
+    <div className="space-y-4">
+      <div className="space-y-2"><div className="flex items-center justify-between"><label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">输入文本</label><span className="text-xs font-mono text-slate-400">{inp.length} 字符</span></div><textarea value={inp} onChange={e=>setInp(e.target.value)} placeholder="输入需要处理的文本..." className="inp w-full p-3 rounded-xl text-sm" style={{minHeight:'150px'}}/></div>
+      <div className="flex flex-wrap gap-2">
+        {ops.map(([label,fn])=><button key={label} onClick={e=>{ripple(e);fn()}} className="ripple-btn btn-s h-9 px-3 rounded-xl text-xs font-medium">{label}</button>)}
+        <button onClick={e=>{ripple(e);setInp('');setOut('')}} className="ripple-btn btn-g h-9 px-3 rounded-xl text-xs">清空</button>
+      </div>
+      <div className="space-y-2"><div className="flex items-center justify-between"><label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">处理结果</label>{out&&<CopyBtn text={out} toast={toast}/>}</div><textarea value={out} readOnly placeholder="处理结果将显示在这里..." className="inp w-full p-3 rounded-xl text-sm" style={{minHeight:'120px',background:'rgba(248,250,252,.9)'}}/></div>
+    </div>
+  </div>);
+};
+
+/* 10. 哈希计算 */
+const HashTool=({toast})=>{
+  const [inp,setInp]=useState(''),[outs,setOuts]=useState({}),[loading,setLoading]=useState(false);
+  const btn=useRef();
+  const run=async e=>{ripple(e,btn);if(!inp.trim()){toast('请输入内容','err');return}setLoading(true);try{const enc=new TextEncoder();const data=enc.encode(inp);const h256=await crypto.subtle.digest('SHA-256',data);const h1=await crypto.subtle.digest('SHA-1',data);const h384=await crypto.subtle.digest('SHA-384',data);const h512=await crypto.subtle.digest('SHA-512',data);const toHex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');setOuts({'SHA-1':toHex(h1),'SHA-256':toHex(h256),'SHA-384':toHex(h384),'SHA-512':toHex(h512)})}catch(err){toast('计算失败: '+err.message,'err')}finally{setLoading(false)}};
+  return(<div className="anim-up"><ST t="哈希计算" sub="使用 WebCrypto API 计算文本的 SHA-1 / SHA-256 / SHA-384 / SHA-512 哈希值"/>
+    <div className="space-y-4">
+      <div className="space-y-2"><label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">输入文本</label><textarea value={inp} onChange={e=>setInp(e.target.value)} placeholder="输入需要计算哈希的文本..." className="inp w-full p-3 rounded-xl text-sm font-mono" style={{minHeight:'120px'}}/></div>
+      <div className="flex gap-2.5">
+        <button ref={btn} onClick={run} disabled={loading} className="ripple-btn btn-p h-10 px-8 rounded-xl text-sm font-semibold flex items-center gap-2">{loading?<svg className="spin" width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="60" strokeDashoffset="20"/></svg>:Ic.hash} 计算哈希</button>
+        <button onClick={e=>{ripple(e);setInp('');setOuts({})}} className="ripple-btn btn-g h-10 px-5 rounded-xl text-sm">清空</button>
+      </div>
+      {Object.keys(outs).length>0&&<div className="space-y-3 anim-up">
+        {Object.entries(outs).map(([algo,val],i)=><div key={algo} className="glass-panel rounded-xl p-4 flex items-start justify-between gap-4 anim-pop" style={{animationDelay:`${i*60}ms`}}>
+          <div className="min-w-0"><p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{algo}</p><p className="text-xs font-mono text-slate-800 break-all leading-relaxed">{val}</p></div>
+          <CopyBtn text={val} toast={toast}/>
+        </div>)}
+      </div>}
+    </div>
+  </div>);
+};
+
+/* ── App ── */
+const App=()=>{
+  const [active,setActive]=useState('blur');
+  const [mOpen,setMOpen]=useState(false);
+  const [toasts,setToasts]=useState([]);
+  const toast=(m,t='ok')=>setToasts(p=>[...p,{id:Date.now()+Math.random(),m,t}]);
+  const rmToast=id=>setToasts(p=>p.filter(t=>t.id!==id));
+
+  const COMP={blur:Blur,fmt:Fmt,resize:Resize,color:ColorEx,audio:AudioTool,b64:B64,url:UrlTool,ts:TsTool,txt:TxtTool,hash:HashTool};
+  const Comp=COMP[active]||Blur;
+
+  const NavItem=({tool})=><button onClick={e=>{ripple(e);setActive(tool.id);setMOpen(false)}} className={`ripple-btn nav-item flex items-center gap-2.5 px-4 py-2.5 rounded-none w-full text-left ${active===tool.id?'nav-active':''}`}>
+    <span className={active===tool.id?'text-slate-900':'text-slate-500'}>{tool.icon}</span>
+    <div className="min-w-0">
+      <p className={`text-sm font-semibold leading-tight truncate ${active===tool.id?'text-slate-900':'text-slate-600'}`}>{tool.label}</p>
+      <p className="text-[11px] text-slate-400 mt-0.5">{tool.desc}</p>
+    </div>
+  </button>;
+
+  return(
+    <div className="page-bg">
+      <div className="layout-root" style={{position:'relative',zIndex:1}}>
+        {/* 侧边栏 */}
+        <aside className="sidebar glass-nav">
+          <div className="px-5 py-5 border-b" style={{borderColor:'rgba(0,0,0,.07)'}}>
+            <h1 className="text-base font-black text-slate-900 tracking-tight">全能工具箱</h1>
+            <p className="text-xs text-slate-400 mt-0.5">图片 · 音频 · 文本处理</p>
+          </div>
+          <nav className="flex-1 py-2 overflow-y-auto">
+            {TOOLS.map(t=><NavItem key={t.id} tool={t}/>)}
+          </nav>
+          <div className="px-5 py-4 border-t" style={{borderColor:'rgba(0,0,0,.06)'}}>
+            <p className="text-[10px] text-slate-400 text-center">本地处理 · 不上传服务器</p>
+          </div>
+        </aside>
+
+        {/* 右侧内容 */}
+        <div className="content-area">
+          {/* 移动端头部 */}
+          <header className="glass-header flex items-center justify-between px-4 py-3 md:hidden flex-shrink-0">
+            <div>
+              <h1 className="text-sm font-black text-slate-900">全能工具箱</h1>
+              <p className="text-[10px] text-slate-400">{TOOLS.find(t=>t.id===active)?.label}</p>
+            </div>
+            <button onClick={e=>{ripple(e);setMOpen(o=>!o)}} className="ripple-btn btn-s h-9 w-9 rounded-xl flex items-center justify-center">{Ic.menu}</button>
+          </header>
+
+          {/* 可滚动内容 */}
+          <div className="content-scroll">
+            <div key={active}><Comp toast={toast}/></div>
+          </div>
+        </div>
+      </div>
+
+      {/* 移动抽屉 */}
+      {mOpen&&<>
+        <div className="mobile-overlay" onClick={()=>setMOpen(false)}/>
+        <div className="mobile-drawer">
+          <div className="flex items-center justify-between px-5 py-5 border-b" style={{borderColor:'rgba(0,0,0,.07)'}}>
+            <h2 className="text-sm font-black text-slate-900">全能工具箱</h2>
+            <button onClick={e=>{ripple(e);setMOpen(false)}} className="ripple-btn btn-s h-8 w-8 rounded-xl flex items-center justify-center">{Ic.close}</button>
+          </div>
+          <nav className="py-2 overflow-y-auto">{TOOLS.map(t=><NavItem key={t.id} tool={t}/>)}</nav>
+        </div>
+      </>}
+
+      <Toasts list={toasts} rm={rmToast}/>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
